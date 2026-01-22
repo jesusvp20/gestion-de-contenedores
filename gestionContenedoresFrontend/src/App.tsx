@@ -18,8 +18,32 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
+  const [cold, setCold] = React.useState<{attempt: number; delayMs: number} | null>(null);
+  React.useEffect(() => {
+    const onCold = (e: Event) => {
+      const ce = e as CustomEvent<{attempt: number; delayMs: number}>;
+      setCold(ce.detail);
+    };
+    const onRecovered = () => setCold(null);
+    window.addEventListener('backend:coldstart', onCold as EventListener);
+    window.addEventListener('backend:recovered', onRecovered);
+    return () => {
+      window.removeEventListener('backend:coldstart', onCold as EventListener);
+      window.removeEventListener('backend:recovered', onRecovered);
+    };
+  }, []);
   return (
     <Router>
+      {cold && (
+        <div className="cold-overlay">
+          <div className="cold-box">
+            <div className="cold-title">Conectando con el servidor...</div>
+            <div className="cold-sub">
+              Intento {cold.attempt} • Próximo reintento en {Math.round(cold.delayMs / 1000)}s
+            </div>
+          </div>
+        </div>
+      )}
       <Routes>
         {/* Ruta pública */}
         <Route path="/login" element={<LoginPage />} />

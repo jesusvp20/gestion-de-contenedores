@@ -13,6 +13,45 @@ const apiClient = axios.create({
     timeout: 12000,
 });
 
+const MAX_RETRIES = 5;
+const baseDelayMs = 1000;
+const isTransientError = (err: any) => {
+    const status = err?.response?.status;
+    return (
+        err?.code === 'ECONNABORTED' ||
+        !err?.response ||
+        (typeof status === 'number' && status >= 500 && status <= 504)
+    );
+};
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const notifyColdStart = (attempt: number, delayMs: number) => {
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('backend:coldstart', { detail: { attempt, delayMs } }));
+    }
+};
+const notifyRecovered = () => {
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('backend:recovered'));
+    }
+};
+const withRetry = async <R>(fn: () => Promise<R>): Promise<R> => {
+    let lastErr: any;
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            const res = await fn();
+            if (attempt > 0) notifyRecovered();
+            return res;
+        } catch (err: any) {
+            lastErr = err;
+            if (!isTransientError(err) || attempt === MAX_RETRIES) break;
+            const delay = baseDelayMs * Math.pow(2, attempt);
+            notifyColdStart(attempt + 1, delay);
+            await sleep(delay);
+        }
+    }
+    throw lastErr;
+};
+
 apiClient.interceptors.request.use((config) => {
     const token = localStorage.getItem('auth_token');
     if (token) {
@@ -58,18 +97,18 @@ apiClient.get = async <T = any, R = AxiosResponse<T, any, {}>, D = any>(
         if (hit && hit.expiry > Date.now()) {
             return Promise.resolve(hit.response as R);
         }
-        const res = await originalGet<T, R, D>(url, config);
+        const res = await withRetry(() => originalGet<T, R, D>(url, config));
         cacheStore.set(key, { expiry: Date.now() + TTL_MS, response: res as R });
         return res;
     }
-    return originalGet<T, R, D>(url, config);
+    return withRetry(() => originalGet<T, R, D>(url, config));
 };
 apiClient.post = async <T = any, R = AxiosResponse<T, any, {}>, D = any>(
     url: string,
     data?: D | undefined,
     config?: AxiosRequestConfig<D> | undefined
 ): Promise<R> => {
-    const res = await originalPost<T, R, D>(url, data, config);
+    const res = await withRetry(() => originalPost<T, R, D>(url, data, config));
     cacheStore.clear();
     return res;
 };
@@ -78,7 +117,7 @@ apiClient.put = async <T = any, R = AxiosResponse<T, any, {}>, D = any>(
     data?: D | undefined,
     config?: AxiosRequestConfig<D> | undefined
 ): Promise<R> => {
-    const res = await originalPut<T, R, D>(url, data, config);
+    const res = await withRetry(() => originalPut<T, R, D>(url, data, config));
     cacheStore.clear();
     return res;
 };
@@ -86,7 +125,7 @@ apiClient.delete = async <T = any, R = AxiosResponse<T, any, {}>, D = any>(
     url: string,
     config?: AxiosRequestConfig<D> | undefined
 ): Promise<R> => {
-    const res = await originalDelete<T, R, D>(url, config);
+    const res = await withRetry(() => originalDelete<T, R, D>(url, config));
     cacheStore.clear();
     return res;
 };

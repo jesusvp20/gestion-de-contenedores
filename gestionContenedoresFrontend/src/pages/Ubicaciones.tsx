@@ -12,6 +12,7 @@ const Ubicaciones: React.FC = () => {
     const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const isAdmin = (localStorage.getItem('user_role') || 'usuario') === 'admin';
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUbicacion, setEditingUbicacion] = useState<Ubicacion | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -105,9 +106,11 @@ const Ubicaciones: React.FC = () => {
                     <h1>Gestión de Ubicaciones</h1>
                     <p>Administre los puntos de almacenamiento y terminales</p>
                 </div>
-                <Button onClick={() => handleOpenModal()}>
-                    <Plus size={18} /> Nueva Ubicación
-                </Button>
+                {isAdmin && (
+                    <Button onClick={() => handleOpenModal()}>
+                        <Plus size={18} /> Nueva Ubicación
+                    </Button>
+                )}
             </div>
 
             <Card className="table-card">
@@ -150,12 +153,16 @@ const Ubicaciones: React.FC = () => {
                                         <td>{u.direccion}</td>
                                         <td>{u.fecha_movimiento}</td>
                                         <td className="actions-cell">
-                                            <button className="action-btn edit" onClick={() => handleOpenModal(u)}>
-                                                <Edit2 size={16} />
-                                            </button>
-                                            <button className="action-btn delete" onClick={() => handleDelete(u.id)}>
-                                                <Trash2 size={16} />
-                                            </button>
+                                            {isAdmin && (
+                                                <>
+                                                    <button className="action-btn edit" onClick={() => handleOpenModal(u)}>
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                    <button className="action-btn delete" onClick={() => handleDelete(u.id)}>
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

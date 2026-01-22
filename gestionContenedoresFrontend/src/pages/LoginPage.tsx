@@ -23,6 +23,7 @@ const LoginPage: React.FC = () => {
             if (response.status === 'success') {
                 localStorage.setItem('auth_token', response.access_token);
                 localStorage.setItem('user_name', response.data.nombre);
+                localStorage.setItem('user_role', response.data.rol || 'usuario');
                 navigate('/dashboard');
             } else {
                 setError(response.message || 'Error al iniciar sesión');

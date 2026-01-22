@@ -13,6 +13,7 @@ const Contenedores: React.FC = () => {
     const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const isAdmin = (localStorage.getItem('user_role') || 'usuario') === 'admin';
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -187,9 +188,11 @@ const Contenedores: React.FC = () => {
                                             <button className="action-btn edit" onClick={() => handleOpenModal(c)}>
                                                 <Edit2 size={16} />
                                             </button>
-                                            <button className="action-btn delete" onClick={() => handleDelete(c.id)}>
-                                                <Trash2 size={16} />
-                                            </button>
+                                            {isAdmin && (
+                                                <button className="action-btn delete" onClick={() => handleDelete(c.id)}>
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
