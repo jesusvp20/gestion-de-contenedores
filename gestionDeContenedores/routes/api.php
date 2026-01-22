@@ -60,3 +60,8 @@ Route::prefix('clientes')->middleware('auth:sanctum')->group(function () {
     Route::delete('/{id}', [ClienteController::class, 'eliminar']);
     Route::get('/{id}/movimientos', [ClienteController::class, 'buscarMovimientosPorCliente']);
 });
+
+// Salud del servicio (sin autenticación) para keepalive
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok'], 200);
+});

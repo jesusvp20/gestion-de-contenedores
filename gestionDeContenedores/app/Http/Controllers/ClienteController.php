@@ -17,11 +17,7 @@ class ClienteController extends Controller
     public function listar(Request $request)
     {
         $user = $request->user();
-        if ($user->rol === 'admin') {
-            $clientes = Cliente::all();
-        } else {
-            $clientes = Cliente::where('usuario_id', $user->id)->get();
-        }
+        $clientes = Cliente::where('usuario_id', $user->id)->get();
         
         return response()->json([
             'status' => 'success',
@@ -45,7 +41,7 @@ class ClienteController extends Controller
         }
 
         $user = $request->user();
-        if ($user->rol !== 'admin' && $cliente->usuario_id !== $user->id) {
+        if ($cliente->usuario_id !== $user->id) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'No autorizado'
@@ -147,7 +143,8 @@ class ClienteController extends Controller
             ], 404);
         }
 
-        if ($request->user()->rol !== 'admin') {
+        $user = $request->user();
+        if ($user->rol !== 'admin' || $cliente->usuario_id !== $user->id) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'No autorizado'

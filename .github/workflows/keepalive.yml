@@ -1,0 +1,16 @@
+name: Backend Keepalive
+
+on:
+  schedule:
+    - cron: "*/12 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Jitter
+        run: sleep $((RANDOM % 60))
+      - name: Ping health endpoint
+        run: |
+          curl -sS --max-time 10 -H "Cache-Control: no-cache" https://gestion-de-contenedores.onrender.com/api/health || true

@@ -17,11 +17,7 @@ class MovimientoController extends Controller
     public function listar(Request $request)
     {
         $user = $request->user();
-        if ($user->rol === 'admin') {
-            $movimientos = Movimiento::with(['contenedor', 'ubicacion', 'cliente'])->get();
-        } else {
-            $movimientos = Movimiento::with(['contenedor', 'ubicacion', 'cliente'])->where('usuario_id', $user->id)->get();
-        }
+        $movimientos = Movimiento::with(['contenedor', 'ubicacion', 'cliente'])->where('usuario_id', $user->id)->get();
         
         return response()->json([
             'status' => 'success',
@@ -77,7 +73,7 @@ class MovimientoController extends Controller
         }
 
         $user = $request->user();
-        if ($user->rol !== 'admin' && $movimiento->usuario_id !== $user->id) {
+        if ($movimiento->usuario_id !== $user->id) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'No autorizado',
@@ -151,7 +147,8 @@ class MovimientoController extends Controller
             ], 404);
         }
 
-        if ($request->user()->rol !== 'admin') {
+        $user = $request->user();
+        if ($user->rol !== 'admin' || $movimiento->usuario_id !== $user->id) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'No autorizado',

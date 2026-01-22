@@ -34,7 +34,7 @@ const notifyRecovered = () => {
         window.dispatchEvent(new CustomEvent('backend:recovered'));
     }
 };
-const withRetry = async <R>(fn: () => Promise<R>): Promise<R> => {
+const withRetry = async <R>(fn: () => Promise<R>, opts?: { silent?: boolean }): Promise<R> => {
     let lastErr: any;
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
         try {
@@ -45,7 +45,7 @@ const withRetry = async <R>(fn: () => Promise<R>): Promise<R> => {
             lastErr = err;
             if (!isTransientError(err) || attempt === MAX_RETRIES) break;
             const delay = baseDelayMs * Math.pow(2, attempt);
-            notifyColdStart(attempt + 1, delay);
+            if (!opts?.silent) notifyColdStart(attempt + 1, delay);
             await sleep(delay);
         }
     }
@@ -91,24 +91,26 @@ apiClient.get = async <T = any, R = AxiosResponse<T, any, {}>, D = any>(
 ): Promise<R> => {
     const bypassHeader = (config?.headers as Record<string, unknown> | undefined)?.['x-cache-bypass'];
     const bypass = String(bypassHeader) === 'true';
+    const silent = String((config?.headers as Record<string, unknown> | undefined)?.['x-silent']) === 'true';
     if (!bypass) {
         const key = buildKey(url, config as AxiosRequestConfig<unknown>);
         const hit = cacheStore.get(key);
         if (hit && hit.expiry > Date.now()) {
             return Promise.resolve(hit.response as R);
         }
-        const res = await withRetry(() => originalGet<T, R, D>(url, config));
+        const res = await withRetry(() => originalGet<T, R, D>(url, config), { silent });
         cacheStore.set(key, { expiry: Date.now() + TTL_MS, response: res as R });
         return res;
     }
-    return withRetry(() => originalGet<T, R, D>(url, config));
+    return withRetry(() => originalGet<T, R, D>(url, config), { silent });
 };
 apiClient.post = async <T = any, R = AxiosResponse<T, any, {}>, D = any>(
     url: string,
     data?: D | undefined,
     config?: AxiosRequestConfig<D> | undefined
 ): Promise<R> => {
-    const res = await withRetry(() => originalPost<T, R, D>(url, data, config));
+    const silent = String((config?.headers as Record<string, unknown> | undefined)?.['x-silent']) === 'true';
+    const res = await withRetry(() => originalPost<T, R, D>(url, data, config), { silent });
     cacheStore.clear();
     return res;
 };
@@ -117,7 +119,8 @@ apiClient.put = async <T = any, R = AxiosResponse<T, any, {}>, D = any>(
     data?: D | undefined,
     config?: AxiosRequestConfig<D> | undefined
 ): Promise<R> => {
-    const res = await withRetry(() => originalPut<T, R, D>(url, data, config));
+    const silent = String((config?.headers as Record<string, unknown> | undefined)?.['x-silent']) === 'true';
+    const res = await withRetry(() => originalPut<T, R, D>(url, data, config), { silent });
     cacheStore.clear();
     return res;
 };
@@ -125,7 +128,8 @@ apiClient.delete = async <T = any, R = AxiosResponse<T, any, {}>, D = any>(
     url: string,
     config?: AxiosRequestConfig<D> | undefined
 ): Promise<R> => {
-    const res = await withRetry(() => originalDelete<T, R, D>(url, config));
+    const silent = String((config?.headers as Record<string, unknown> | undefined)?.['x-silent']) === 'true';
+    const res = await withRetry(() => originalDelete<T, R, D>(url, config), { silent });
     cacheStore.clear();
     return res;
 };

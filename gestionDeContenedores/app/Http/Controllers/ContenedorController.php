@@ -11,11 +11,7 @@ class ContenedorController extends Controller
     public function listar(Request $request)
     {
         $user = $request->user();
-        if ($user->rol === 'admin') {
-            $contenedores = Contenedor::with('ubicacion')->get();
-        } else {
-            $contenedores = Contenedor::with('ubicacion')->where('usuario_id', $user->id)->get();
-        }
+        $contenedores = Contenedor::with('ubicacion')->where('usuario_id', $user->id)->get();
         return response()->json([
             'status' => 'success',
             'data' => $contenedores
@@ -63,7 +59,7 @@ class ContenedorController extends Controller
         }
 
         $user = $request->user();
-        if ($user->rol !== 'admin' && $contenedor->usuario_id !== $user->id) {
+        if ($contenedor->usuario_id !== $user->id) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'No autorizado'
@@ -128,7 +124,8 @@ class ContenedorController extends Controller
             ], 404);
         }
 
-        if ($request->user()->rol !== 'admin') {
+        $user = $request->user();
+        if ($user->rol !== 'admin' || $contenedor->usuario_id !== $user->id) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'No autorizado'

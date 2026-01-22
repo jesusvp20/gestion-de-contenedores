@@ -32,6 +32,15 @@ function App() {
       window.removeEventListener('backend:recovered', onRecovered);
     };
   }, []);
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      // Ping silencioso para mantener caliente el backend
+      import('./services/apiClient').then(({ default: client }) => {
+        client.get('/health', { headers: { 'x-cache-bypass': 'true', 'x-silent': 'true' } }).catch(() => void 0);
+      });
+    }, 11 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
   return (
     <Router>
       {cold && (
