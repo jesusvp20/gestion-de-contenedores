@@ -1,7 +1,9 @@
 import axios from 'axios';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL =
+    (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL) ||
+    'https://gestion-de-contenedores.onrender.com/api';
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
