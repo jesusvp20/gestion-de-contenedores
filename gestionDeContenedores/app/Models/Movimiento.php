@@ -24,7 +24,8 @@ class Movimiento extends Model
         'id_ubicacion',
         'fecha_movimiento',
         'movimiento_registrado',
-        'id_cliente'
+        'id_cliente',
+        'usuario_id'
     ];
 
     /**

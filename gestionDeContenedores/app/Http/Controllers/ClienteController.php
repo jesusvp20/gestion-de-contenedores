@@ -14,9 +14,14 @@ class ClienteController extends Controller
     /**
      * Lista todos los clientes registrados.
      */
-    public function listar()
+    public function listar(Request $request)
     {
-        $clientes = Cliente::all();
+        $user = $request->user();
+        if ($user->rol === 'admin') {
+            $clientes = Cliente::all();
+        } else {
+            $clientes = Cliente::where('usuario_id', $user->id)->get();
+        }
         
         return response()->json([
             'status' => 'success',
@@ -27,7 +32,7 @@ class ClienteController extends Controller
     /**
      * Busca un cliente específico por su ID.
      */
-    public function buscarCliente($id)
+    public function buscarCliente(Request $request, $id)
     {
         $cliente = Cliente::find($id);
 
@@ -39,6 +44,13 @@ class ClienteController extends Controller
             ], 404);
         }
 
+        $user = $request->user();
+        if ($user->rol !== 'admin' && $cliente->usuario_id !== $user->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No autorizado'
+            ], 403);
+        }
         return response()->json([
             'status' => 'success',
             'data' => $cliente
@@ -64,7 +76,9 @@ class ClienteController extends Controller
             ], 400);
         }
 
-        $cliente = Cliente::create($request->all());
+        $data = $request->all();
+        $data['usuario_id'] = $request->user()->id;
+        $cliente = Cliente::create($data);
 
         return response()->json([
             'status' => 'success',
@@ -88,6 +102,13 @@ class ClienteController extends Controller
             ], 404);
         }
 
+        $user = $request->user();
+        if ($user->rol !== 'admin' && $cliente->usuario_id !== $user->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No autorizado'
+            ], 403);
+        }
         $validator = Validator::make($request->all(), [
             'nombre' => 'required|string|max:255',
             'telefono' => 'required|string|max:15',
@@ -114,7 +135,7 @@ class ClienteController extends Controller
     /**
      * Elimina un cliente por su ID.
      */
-    public function eliminar($id)
+    public function eliminar(Request $request, $id)
     {
         $cliente = Cliente::find($id);
 
@@ -126,6 +147,12 @@ class ClienteController extends Controller
             ], 404);
         }
 
+        if ($request->user()->rol !== 'admin') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No autorizado'
+            ], 403);
+        }
         $cliente->delete();
 
         return response()->json([
@@ -137,7 +164,7 @@ class ClienteController extends Controller
     /**
      * Obtiene todos los movimientos asociados a un cliente.
      */
-    public function buscarMovimientosPorCliente($id)
+    public function buscarMovimientosPorCliente(Request $request, $id)
     {
         $cliente = Cliente::with(['movimientos.contenedor', 'movimientos.ubicacion'])->find($id);
 
@@ -148,6 +175,13 @@ class ClienteController extends Controller
             ], 404);
         }
 
+        $user = $request->user();
+        if ($user->rol !== 'admin' && $cliente->usuario_id !== $user->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No autorizado'
+            ], 403);
+        }
         return response()->json([
             'status' => 'success',
             'data' => [

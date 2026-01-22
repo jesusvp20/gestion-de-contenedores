@@ -50,6 +50,12 @@ class UbicacionController extends Controller
      */
     public function crear(Request $request)
     {
+        if ($request->user()->rol !== 'admin') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No autorizado'
+            ], 403);
+        }
         $validator = Validator::make($request->all(), [
             'nombre' => 'required|string|max:255',
             'direccion' => 'required|string|max:255',
@@ -90,6 +96,12 @@ class UbicacionController extends Controller
      */
     public function actualizar(Request $request, $id)
     {
+        if ($request->user()->rol !== 'admin') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No autorizado'
+            ], 403);
+        }
         $ubicacion = Ubicacion::find($id);
 
         if (!$ubicacion) {
@@ -128,6 +140,12 @@ class UbicacionController extends Controller
      */
     public function eliminar($id)
     {
+        if (request()->user()->rol !== 'admin') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No autorizado'
+            ], 403);
+        }
         $ubicacion = Ubicacion::find($id);
 
         if (!$ubicacion) {

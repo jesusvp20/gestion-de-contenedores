@@ -14,7 +14,7 @@ use App\Http\Controllers\ClienteController;
 */
 
 // Rutas para Contenedores
-Route::prefix('contenedores')->group(function () {
+Route::prefix('contenedores')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [ContenedorController::class, 'listar']);
     Route::post('/', [ContenedorController::class, 'crear']);
     Route::get('/{id}', [ContenedorController::class, 'encontrar']);
@@ -23,7 +23,7 @@ Route::prefix('contenedores')->group(function () {
 });
 
 // Rutas para Ubicaciones
-Route::prefix('ubicaciones')->group(function () {
+Route::prefix('ubicaciones')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [UbicacionController::class, 'listar']);
     Route::get('/{id}', [UbicacionController::class, 'buscarUbicacion']);
     Route::post('/', [UbicacionController::class, 'crear']);
@@ -33,17 +33,17 @@ Route::prefix('ubicaciones')->group(function () {
 
 // Rutas para Usuarios
 Route::prefix('usuarios')->group(function () {
-    Route::get('/', [UsuarioController::class, 'listar']);
-    Route::get('/{id}', [UsuarioController::class, 'buscarUsuario']);
     Route::post('/registrar', [UsuarioController::class, 'registrar']);
     Route::post('/login', [UsuarioController::class, 'login']);
     Route::post('/forgot-password', [UsuarioController::class, 'forgotPassword']);
     
     Route::middleware('auth:sanctum')->post('/logout', [UsuarioController::class, 'logout']);
+    Route::middleware('auth:sanctum')->get('/', [UsuarioController::class, 'listar']);
+    Route::middleware('auth:sanctum')->get('/{id}', [UsuarioController::class, 'buscarUsuario']);
 });
 
 // Rutas para Movimientos
-Route::prefix('movimientos')->group(function () {
+Route::prefix('movimientos')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [MovimientoController::class, 'listar']);
     Route::get('/{id}', [MovimientoController::class, 'buscarMovimiento']);
     Route::post('/', [MovimientoController::class, 'crear']);
@@ -52,7 +52,7 @@ Route::prefix('movimientos')->group(function () {
 });
 
 // Rutas para Clientes
-Route::prefix('clientes')->group(function () {
+Route::prefix('clientes')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [ClienteController::class, 'listar']);
     Route::post('/', [ClienteController::class, 'crear']);
     Route::get('/{id}', [ClienteController::class, 'buscarCliente']);

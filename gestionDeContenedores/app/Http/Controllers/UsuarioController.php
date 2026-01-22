@@ -15,8 +15,14 @@ class UsuarioController extends Controller
     /**
      * Lista todos los usuarios.
      */
-    public function listar()
+    public function listar(Request $request)
     {
+        if ($request->user()->rol !== 'admin') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No autorizado',
+            ], 403);
+        }
         $usuarios = Usuario::all();
         
         return response()->json([
@@ -28,8 +34,14 @@ class UsuarioController extends Controller
     /**
      * Busca un usuario por ID.
      */
-    public function buscarUsuario($id)
+    public function buscarUsuario(Request $request, $id)
     {
+        if ($request->user()->rol !== 'admin') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No autorizado',
+            ], 403);
+        }
         $usuario = Usuario::find($id);
 
         if (!$usuario) {

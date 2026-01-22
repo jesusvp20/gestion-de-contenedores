@@ -8,9 +8,14 @@ use Illuminate\Support\Facades\Validator;
 
 class ContenedorController extends Controller
 {
-    public function listar()
+    public function listar(Request $request)
     {
-        $contenedores = Contenedor::with('ubicacion')->get();
+        $user = $request->user();
+        if ($user->rol === 'admin') {
+            $contenedores = Contenedor::with('ubicacion')->get();
+        } else {
+            $contenedores = Contenedor::with('ubicacion')->where('usuario_id', $user->id)->get();
+        }
         return response()->json([
             'status' => 'success',
             'data' => $contenedores
@@ -35,7 +40,9 @@ class ContenedorController extends Controller
             ], 400);
         }
 
-        $contenedor = Contenedor::create($request->all());
+        $data = $request->all();
+        $data['usuario_id'] = $request->user()->id;
+        $contenedor = Contenedor::create($data);
 
         return response()->json([
             'status' => 'success',
@@ -44,7 +51,7 @@ class ContenedorController extends Controller
         ], 201);
     }
 
-    public function encontrar($id)
+    public function encontrar(Request $request, $id)
     {
         $contenedor = Contenedor::with('ubicacion')->find($id);
 
@@ -55,6 +62,13 @@ class ContenedorController extends Controller
             ], 404);
         }
 
+        $user = $request->user();
+        if ($user->rol !== 'admin' && $contenedor->usuario_id !== $user->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No autorizado'
+            ], 403);
+        }
         return response()->json([
             'status' => 'success',
             'data' => $contenedor
@@ -72,6 +86,13 @@ class ContenedorController extends Controller
             ], 404);
         }
 
+        $user = $request->user();
+        if ($user->rol !== 'admin' && $contenedor->usuario_id !== $user->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No autorizado'
+            ], 403);
+        }
         $validator = Validator::make($request->all(), [
             'tipo_contenedor' => 'string',
             'capacidad' => 'integer',
@@ -96,7 +117,7 @@ class ContenedorController extends Controller
         ], 200);
     }
 
-    public function eliminar($id)
+    public function eliminar(Request $request, $id)
     {
         $contenedor = Contenedor::find($id);
 
@@ -107,6 +128,12 @@ class ContenedorController extends Controller
             ], 404);
         }
 
+        if ($request->user()->rol !== 'admin') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No autorizado'
+            ], 403);
+        }
         $contenedor->delete();
 
         return response()->json([

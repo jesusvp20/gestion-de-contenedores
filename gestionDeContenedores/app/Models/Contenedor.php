@@ -24,7 +24,8 @@ class Contenedor extends Model
         'tipo_contenedor',
         'estado',
         'ubicacion_id',
-        'capacidad'
+        'capacidad',
+        'usuario_id'
     ];
 
     /**

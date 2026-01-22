@@ -14,9 +14,14 @@ class MovimientoController extends Controller
     /**
      * Lista todos los movimientos con sus relaciones.
      */
-    public function listar()
+    public function listar(Request $request)
     {
-        $movimientos = Movimiento::with(['contenedor', 'ubicacion', 'cliente'])->get();
+        $user = $request->user();
+        if ($user->rol === 'admin') {
+            $movimientos = Movimiento::with(['contenedor', 'ubicacion', 'cliente'])->get();
+        } else {
+            $movimientos = Movimiento::with(['contenedor', 'ubicacion', 'cliente'])->where('usuario_id', $user->id)->get();
+        }
         
         return response()->json([
             'status' => 'success',
@@ -45,7 +50,9 @@ class MovimientoController extends Controller
             ], 400);
         }
 
-        $movimiento = Movimiento::create($request->all());
+        $data = $request->all();
+        $data['usuario_id'] = $request->user()->id;
+        $movimiento = Movimiento::create($data);
 
         return response()->json([
             'status' => 'success',
@@ -57,7 +64,7 @@ class MovimientoController extends Controller
     /**
      * Busca un movimiento por ID.
      */
-    public function buscarMovimiento($id)
+    public function buscarMovimiento(Request $request, $id)
     {
         $movimiento = Movimiento::with(['contenedor', 'ubicacion', 'cliente'])->find($id);
 
@@ -69,6 +76,13 @@ class MovimientoController extends Controller
             ], 404);
         }
 
+        $user = $request->user();
+        if ($user->rol !== 'admin' && $movimiento->usuario_id !== $user->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No autorizado',
+            ], 403);
+        }
         return response()->json([
             'status' => 'success',
             'data' => $movimiento
@@ -90,6 +104,13 @@ class MovimientoController extends Controller
             ], 404);
         }
 
+        $user = $request->user();
+        if ($user->rol !== 'admin' && $movimiento->usuario_id !== $user->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No autorizado',
+            ], 403);
+        }
         $validator = Validator::make($request->all(), [
             'id_contenedor' => 'required|exists:contenedores,id',
             'id_ubicacion' => 'required|exists:ubicacion,id',
@@ -118,7 +139,7 @@ class MovimientoController extends Controller
     /**
      * Elimina un registro de movimiento.
      */
-    public function eliminar($id)
+    public function eliminar(Request $request, $id)
     {
         $movimiento = Movimiento::find($id);
 
@@ -130,6 +151,12 @@ class MovimientoController extends Controller
             ], 404);
         }
 
+        if ($request->user()->rol !== 'admin') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No autorizado',
+            ], 403);
+        }
         $movimiento->delete();
 
         return response()->json([
