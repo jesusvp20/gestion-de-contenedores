@@ -1,0 +1,25 @@
+# Global
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+coverage/
+
+# Root Node
+node_modules/
+
+# Frontend (Vite/React)
+gestionContenedoresFrontend/node_modules/
+gestionContenedoresFrontend/dist/
+gestionContenedoresFrontend/.vite/
+gestionContenedoresFrontend/.env
+
+# Backend (Laravel)
+gestionDeContenedores/vendor/
+gestionDeContenedores/.env
+gestionDeContenedores/storage/*.key
+gestionDeContenedores/storage/logs/*.log
+gestionDeContenedores/bootstrap/cache/*.php
+
+# Root env
+.env
